@@ -23,6 +23,8 @@ namespace Toastify
 {
     public partial class Toast : Window
     {
+        private bool isMute = false;
+
         private const string DEFAULT_ICON = "SpotifyToastifyLogo.png";
         private const string AD_PLAYING_ICON = "SpotifyAdPlaying.png";
         private const string ALBUM_ACCESS_DENIED_ICON = "ToastifyAccessDenied.png";
@@ -284,9 +286,11 @@ namespace Toastify
                 }
             }
         }
-
+        
         private void UpdateSongForToastify(Song currentSong)
         {
+            MuteAdsense(currentSong);
+
             if (string.IsNullOrWhiteSpace(currentSong.Track))
             {
                 currentSong.CoverArtUrl = AD_PLAYING_ICON;
@@ -297,6 +301,32 @@ namespace Toastify
             {
                 currentSong.CoverArtUrl = DEFAULT_ICON;
             }
+        }
+
+        private void MuteAdsense(Song currentSong)
+        {
+
+            if (IsSongAdsense(currentSong))
+                MuteSpotify();
+
+            if (NextSongAfterAdsense(currentSong))
+                MuteSpotify();
+        }
+
+        private bool IsSongAdsense(Song currentSong)
+        {
+            return !isMute && (string.IsNullOrWhiteSpace(currentSong.Track) || currentSong.Track == "Spotify Ad");
+        }
+
+        private bool NextSongAfterAdsense(Song currentSong)
+        {
+            return isMute && !string.IsNullOrWhiteSpace(currentSong.Track) && currentSong.Track != "Spotify Ad";
+        }
+
+        private void MuteSpotify()
+        {
+            Spotify.SendAction(SpotifyAction.Mute);
+            isMute = !isMute;
         }
 
         private void FadeIn(bool force = false, bool isUpdate = false)
